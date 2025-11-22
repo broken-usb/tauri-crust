@@ -12,9 +12,15 @@
   "app": {
     "windows": [
       {
-        "title": "tauri-crust",
-        "width": 800,
-        "height": 600
+        "title": "CRust | Compilador C++ feito em Rust",
+        "width": 1024,
+        "height": 768,
+        "resizable": true,
+        "fullscreen": false,
+        "maximized": false,
+        "decorations": true,
+        "transparent": false,
+        "alwaysOnTop": false
       }
     ],
     "security": {
@@ -30,6 +36,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "shortDescription": "Compilador C++ feito em Rust.",
+    "longDescription": "Compilador léxico e sintático para C++ feito em Rust com Tauri, React e TypeScript.",
+    "category": "DeveloperTool"
   }
 }

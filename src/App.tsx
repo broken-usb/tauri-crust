@@ -7,6 +7,8 @@ import { ASTOutput } from "./components/ASTOutput";
 import { Button } from "./components/ui/button";
 import { ModeToggle } from "./components/mode-toggle";
 import { Play } from "lucide-react";
+import { Toaster } from "./components/ui/sonner";
+import { toast } from "sonner";
 
 interface Token {
   type: string;
@@ -45,6 +47,8 @@ int main() {
     setTokens([]);
     setAst(null);
 
+    const loadingToast = toast.loading("Compilamento iniciado...");
+
     try {
       // Chama o backend Rust
       const result = await invoke<CompileResult>("compile", { code });
@@ -54,16 +58,30 @@ int main() {
 
       if (result.error) {
         // Se houver erro de lógica (parser), mostra alerta mas mantém os tokens visíveis
-        alert(result.error);
+        toast.dismiss(loadingToast);
+        //alert(result.error);
+        toast.error("Erro de Compilação", {
+          description: result.error,
+          duration: 5000,
+        });
       } else {
         // Sucesso total
+        toast.dismiss(loadingToast);
         setAst(result.ast);
+        toast.success("Compilação Concluída!", {
+          description: "Análise léxica e sintática finalizadas com sucesso.",
+          duration: 5000,
+        });
       }
 
     } catch (error) {
       // Erros fatais (Rust panic não tratado ou falha de comunicação)
       console.error(error);
-      alert("Erro crítico ao compilar: " + error);
+      toast.dismiss(loadingToast);
+      //alert("Erro crítico ao compilar: " + error);
+      toast.error("Erro Crítico", {
+        description: "Falha na comunicação com o compilador: " + error,
+      });
     } finally {
       setIsCompiling(false);
     }
@@ -90,6 +108,9 @@ int main() {
           </Button>
         </div>
       </header>
+
+      {/* Toasts */}
+      <Toaster />
 
       {/* Área de Conteúdo com Abas */}
       <Tabs defaultValue="editor" className="flex-1 flex flex-col overflow-hidden">
