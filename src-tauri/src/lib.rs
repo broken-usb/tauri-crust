@@ -6,14 +6,14 @@ use CompiladorRustC::{Lexer, Parser, Stmt, Token};
 #[derive(Serialize)]
 struct CompilerOutput {
     tokens: Vec<Token>,
-    ast: Vec<Stmt>,
+    ast: Option<Vec<Stmt>>,
+    error: Option<String>,   
 }
 
 #[tauri::command]
 fn compile(code: String) -> Result<CompilerOutput, String> {
-    // catch_unwind impede que erros de sintaxe (panic!) fechem o programa
-    let result = std::panic::catch_unwind(|| {
-        // 1. Léxico
+    // executamos o Lexer isoladamente. Se der panic aqui, é um erro fatal.
+    let lexer_result = std::panic::catch_unwind(|| {
         let mut lexer = Lexer::new(code);
         let mut tokens: Vec<Token> = Vec::new();
 
@@ -27,32 +27,46 @@ fn compile(code: String) -> Result<CompilerOutput, String> {
                 break;
             }
         }
-
-        // 2. Sintático
-        // Clonamos tokens pois o parser consome o vetor
-        let mut parser = Parser::new(tokens.clone());
-        let ast = parser.parse();
-
-        CompilerOutput {
-            tokens,
-            ast,
-        }
+        tokens
     });
 
-    // Aqui tratamos o resultado do panic para extrair a mensagem
-    match result {
-        Ok(output) => Ok(output),
+    // se o Lexer falhar, retornamos erro de sistema (Promise reject no frontend)
+    let tokens = match lexer_result {
+        Ok(t) => t,
+        Err(_) => return Err("Erro fatal durante a análise léxica.".to_string()),
+    };
+
+    // clonamos tokens para o parser, mantendo a cópia original para retorno
+    let tokens_for_parser = tokens.clone();
+    
+    let parser_result = std::panic::catch_unwind(|| {
+        let mut parser = Parser::new(tokens_for_parser);
+        parser.parse()
+    });
+
+    // Construímos a resposta baseada no sucesso ou falha do Parser
+    match parser_result {
+        Ok(ast) => Ok(CompilerOutput {
+            tokens,
+            ast: Some(ast),
+            error: None,
+        }),
         Err(e) => {
-            // Tenta extrair a mensagem se for uma string estática (ex: panic!("erro"))
-            if let Some(msg) = e.downcast_ref::<&str>() {
-                return Err(format!("Erro de Sintaxe: {}", msg));
-            }
-            // Tenta extrair a mensagem se for uma String formatada (ex: panic!("{}", erro))
-            if let Some(msg) = e.downcast_ref::<String>() {
-                return Err(format!("Erro de Sintaxe: {}", msg));
-            }
-            // Fallback para erro desconhecido
-            Err("Ocorreu um erro de compilação desconhecido.".to_string())
+            // recupera a mensagem de erro do panic
+            let msg = if let Some(m) = e.downcast_ref::<&str>() {
+                format!("Erro de Sintaxe: {}", m)
+            } else if let Some(m) = e.downcast_ref::<String>() {
+                format!("Erro de Sintaxe: {}", m)
+            } else {
+                "Erro de compilação desconhecido.".to_string()
+            };
+
+            // retorna os tokens com o erro (Promise resolve no frontend, mas com flag de erro)
+            Ok(CompilerOutput {
+                tokens,
+                ast: None,
+                error: Some(msg),
+            })
         }
     }
 }

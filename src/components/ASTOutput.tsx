@@ -47,7 +47,6 @@ function ASTNode({ node, label, depth = 0 }: ASTNodeProps) {
   
   // Se tiver mais de 1 chave, é certeza que é uma Struct (como Parametro {tipo, nome...})
   // Se tiver 1 chave, pode ser um Enum OU uma Struct com 1 campo. 
-  // No seu caso, Enums começam com Maiúscula (DeclaracaoFuncao) e campos com minúscula (tipo).
   const isEnumWrapper = keys.length === 1 && /^[A-Z]/.test(keys[0]);
 
   let nodeLabel = "";
@@ -111,8 +110,8 @@ function ASTNode({ node, label, depth = 0 }: ASTNodeProps) {
       {isExpanded && hasChildren && (
         <div>
           {properties.map(([key, value], index) => {
-            // Se for o valor 'value' que já mostramos no header, pula
-            if (!isStruct && key === 'value') return null;
+
+            if (!isStruct && key === 'value' && properties.length === 1) return null;
 
             return (
             <div key={index}>

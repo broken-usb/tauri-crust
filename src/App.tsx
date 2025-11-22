@@ -17,7 +17,8 @@ interface Token {
 
 interface CompileResult {
   tokens: Token[];
-  ast: any;
+  ast: any | null;
+  error?: string | null;
 }
 
 export default function App() {
@@ -33,15 +34,30 @@ int main() {
 
   async function handleCompile() {
     setIsCompiling(true);
+    
+    // Limpa o estado anterior para evitar confusão visual
+    setTokens([]);
+    setAst(null);
+
     try {
       // Chama o backend Rust
       const result = await invoke<CompileResult>("compile", { code });
       
+      // Sempre atualiza os tokens, mesmo se houver erro de sintaxe
       setTokens(result.tokens);
-      setAst(result.ast);
+
+      if (result.error) {
+        // Se houver erro de lógica (parser), mostra alerta mas mantém os tokens visíveis
+        alert(result.error);
+      } else {
+        // Sucesso total
+        setAst(result.ast);
+      }
+
     } catch (error) {
+      // Erros fatais (Rust panic não tratado ou falha de comunicação)
       console.error(error);
-      alert("Erro ao compilar: " + error);
+      alert("Erro crítico ao compilar: " + error);
     } finally {
       setIsCompiling(false);
     }
