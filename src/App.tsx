@@ -22,9 +22,15 @@ interface CompileResult {
 }
 
 export default function App() {
-  const [code, setCode] = useState(`// C++ Sample Code
+  const [code, setCode] = useState(`// Código de Exemplo em C++
+#include <iostream>
+using namespace std;
+
 int main() {
-    int x = 42;
+    int n1 = 67;
+
+    cout << "Hello, World!";
+
     return 0;
 }`);
   
