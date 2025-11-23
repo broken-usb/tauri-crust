@@ -19,15 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # --- NOVO PASSO: Clona o Backend ---
       - name: Checkout Backend Repo
         uses: actions/checkout@v4
         with:
-          # ATENÇÃO: Troque "SEU_USUARIO/NOME_DO_REPO_BACKEND" pelo nome real
-          # Exemplo: joao/c-enferrujado
-          repository: SEU_USUARIO/NOME_DO_REPO_BACKEND 
+          repository: Salieriry/c-enferrujado
           path: src-tauri/cpp_compiler
-      # -----------------------------------
 
       - name: use Node.js 20
         uses: actions/setup-node@v4
